@@ -114,7 +114,7 @@ func main() {
 	}
 
 	if cmdVersion.Happened() {
-		fmt.Println("[VERSION] Current version: v0.0.3-alpha-1")
+		fmt.Println("[VERSION] Current version: v0.0.3-final-1")
 		os.Exit(0)
 	} else if cmdCreate.Happened() {
 		// CreateHandling
