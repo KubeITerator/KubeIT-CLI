@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-func CreateTemplate(filepath, name string, c *httpd.RequestClient) (returndata map[string]string, failed bool, err error) {
+func CreateScheme(filepath, name string, c *httpd.RequestClient) (returndata map[string]string, failed bool, err error) {
 
 	data, err := ioutil.ReadFile(filepath)
 	if err != nil {

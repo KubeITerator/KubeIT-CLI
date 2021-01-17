@@ -5,6 +5,7 @@ import (
 	"github.com/akamensky/argparse"
 	"kubeitcli/ConfigHandler"
 	"kubeitcli/httpd"
+	"kubeitcli/httpd/functions"
 	"os"
 )
 
@@ -42,18 +43,19 @@ func main() {
 
 	// create Workflow
 	wfInputFiles := cmdCreateWorkflow.StringList("i", "inputfile", &argparse.Options{Required: false, Help: "Inputfile(s) are automatically uploaded to S3 and substituted as kubeit.input.inputdata1-x, the first inputfile is mapped to kubeit.input.inputdata"})
+	wfLocalScheme := cmdCreateWorkflow.String("s", "scheme", &argparse.Options{Required: true, Help: "Name for a predefined local scheme, a list of all local schemes is available under: kubeit get scheme -l "})
 	wfWatchFlag := cmdCreateWorkflow.Flag("w", "watch", &argparse.Options{Required: false, Help: "Watch can be used to monitor a workflows execution, in conjuction with -o the results will automatically be downloaded"})
-	wfOutputFile := cmdCreateWorkflow.String("o", "output", &argparse.Options{Required: false, Help: "(optional) outputfile can be used in conjuction with the -w/--watch flag to automatically download results"})
+	wfOutputFile := cmdCreateWorkflow.StringList("o", "output", &argparse.Options{Required: false, Help: "(optional) outputfile(s) can be used in conjuction with the -w/--watch flag to automatically download results, if multiple results exist each result must be mapped to a outputfile"})
 	wfParameter := cmdCreateWorkflow.StringList("p", "parameter", &argparse.Options{Required: false, Help: "Parameter are all parameters that dont have a remote or local default, they must be specified with the following syntax: parameterName='parameterValue' "})
 	// create Scheme
-	cmdCreateScheme.String("n", "name", &argparse.Options{Required: true, Help: "Remote name for the new scheme"})
-	cmdCreateScheme.String("f", "File", &argparse.Options{Required: true, Help: "YAML kubeIT workflow scheme"})
+	crtSchemeName := cmdCreateScheme.String("n", "name", &argparse.Options{Required: true, Help: "Remote name for the new scheme"})
+	crtSchemeFile := cmdCreateScheme.String("f", "file", &argparse.Options{Required: true, Help: "YAML kubeIT workflow scheme"})
 	// create S3
-	cmdCreateS3.File("f", "File", os.O_RDWR, 0644, &argparse.Options{Required: true, Help: "File that should be uploaded to S3"})
+	s3upfile := cmdCreateS3.String("f", "file", &argparse.Options{Required: true, Help: "File that should be uploaded to S3"})
 
 	// get Workflow(s)
-	cmdGetWorkflow.String("n", "name", &argparse.Options{Required: false, Help: "Name of a workflow, gets the current status of the workflow"})
-	cmdGetWorkflow.String("p", "project", &argparse.Options{Required: false, Help: "Name of a project, gets the current status of all workflows in a project"})
+	cmdGetWfName := cmdGetWorkflow.String("n", "name", &argparse.Options{Required: false, Help: "Name of a workflow, gets the current status of the workflow"})
+	cmdGetWfProject := cmdGetWorkflow.String("p", "project", &argparse.Options{Required: false, Help: "Name of a project, gets the current status of all workflows in a project"})
 	// get Scheme(s)
 	cmdGetScheme.String("n", "name", &argparse.Options{Required: true, Help: "Name of a scheme, gets the current description of the specified scheme"})
 	cmdGetScheme.Flag("l", "local", &argparse.Options{Default: true, Help: "Get local schemes if true, else get remote schemes"})
@@ -96,11 +98,11 @@ func main() {
 	err = cHandler.LoadConfig()
 	if err != nil {
 		if os.IsNotExist(err) {
-			fmt.Println("No config file found, please use 'kubeit configure' to create a new one, or use the -c flag to specify another config.")
+			fmt.Println("[INITIALISATION] No config file found, please use 'kubeit configure' to create a new one, or use the -c flag to specify another config.")
 			os.Exit(0)
 		}
-		fmt.Println(fmt.Sprintf("Error in loading configfile: %v", configFile))
-		fmt.Println(fmt.Sprintf("Error: %v", err.Error()))
+		fmt.Println(fmt.Sprintf("[INITIALISATION] Error in loading configfile: %v", configFile))
+		fmt.Println(fmt.Sprintf("[INITIALISATION] Error: %v", err.Error()))
 		os.Exit(2)
 	}
 
@@ -112,24 +114,49 @@ func main() {
 	}
 
 	if cmdVersion.Happened() {
-		fmt.Println("Current version: v0.0.3-alpha-1")
+		fmt.Println("[VERSION] Current version: v0.0.3-alpha-1")
 		os.Exit(0)
 	} else if cmdCreate.Happened() {
 		// CreateHandling
 		if cmdCreateWorkflow.Happened() {
 
-			wfInputFiles
-			wfWatchFlag
-			wfOutputFile
-			wfParameter
+			var cscheme *ConfigHandler.Scheme
+			for _, scheme := range cHandler.Config.Schemes {
+				if scheme.LocalName == *wfLocalScheme {
+					cscheme = &scheme
+				}
+			}
+			if cscheme == nil {
+				fmt.Println("[CREATE WF] Unknown scheme name: " + *wfLocalScheme)
+				os.Exit(2)
+			}
+
+			functions.CreateAndMonitorWorkflow(&rClient, *cscheme, *wfParameter, *wfInputFiles, *wfWatchFlag, *wfOutputFile)
 
 		} else if cmdCreateS3.Happened() {
 
-		} else if cmdCreateScheme.Happened() {
+			url, err := functions.UploadToS3(*s3upfile, &rClient)
+			if err != nil {
+				fmt.Println("[S3-UPLOAD] Error in uploading file to S3")
+				fmt.Println(err.Error())
+				os.Exit(2)
+			}
 
+			fmt.Println(fmt.Sprintf("[S3-UPLOAD] Your Download URL for %v :", *s3upfile))
+			fmt.Println(url)
+
+		} else if cmdCreateScheme.Happened() {
+			functions.CreateRemoteScheme(*crtSchemeName, *crtSchemeFile, &rClient)
 		}
 
 	} else if cmdGet.Happened() {
+		if cmdGetWorkflow.Happened() {
+			functions.GetWorkflowStatus(*cmdGetWfName, *cmdGetWfProject, &rClient)
+		} else if cmdGetScheme.Happened() {
+
+		} else if cmdGetResults.Happened() {
+
+		}
 		// GetHandling
 	} else if cmdDelete.Happened() {
 		// DeleteHandling

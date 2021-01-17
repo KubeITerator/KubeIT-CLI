@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -37,28 +36,24 @@ func (c *RequestClient) SendRequest(method, path string, requestBody, returnBody
 	return err, resp.StatusCode
 }
 
-func (c *RequestClient) S3UploadRequest(path string, body []byte) (string, error) {
+func (c *RequestClient) S3UploadRequest(path string, body []byte) error {
 
 	req, err := http.NewRequest("PUT", path, bytes.NewReader(body))
 	if err != nil {
 		fmt.Println("Error in creating S3-Request")
 		fmt.Println(err.Error())
-		return "", err
+		return err
 	}
 
-	resp, err := c.do(req, nil)
+	_, err = c.do(req, nil)
 
 	if err != nil {
 		fmt.Println("Error in executing S3-Request")
 		fmt.Println(err.Error())
-		return "", err
+		return err
 	}
 
-	retst, err := ioutil.ReadAll(resp.Body)
-
-	defer resp.Body.Close()
-
-	return string(retst), err
+	return err
 }
 
 func (c *RequestClient) newRequest(method, path string, body interface{}) (*http.Request, error) {
