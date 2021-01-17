@@ -72,9 +72,9 @@ func (c *ConfigHandler) DeleteLocalScheme(localName string) error {
 
 func (c *ConfigHandler) ConfigureConDialogue() (err error) {
 	var filePath string
-	fmt.Println("This is the standard configuration interface for KubeIT.")
-	fmt.Println("All specified parameters will be stored in ~/.kubeit/config.json if no other path is specified.")
-	fmt.Println("Config entries marked as (optional) can be skipped by hitting enter, (required) parameters must be specified.")
+	fmt.Println("[CONFIG CONNECTION] This is the standard configuration interface for KubeIT.")
+	fmt.Println("[CONFIG CONNECTION] All specified parameters will be stored in ~/.kubeit/config.json if no other path is specified.")
+	fmt.Println("[CONFIG CONNECTION] Config entries marked as (optional) can be skipped by hitting enter, (required) parameters must be specified.")
 	path := Ask("path", "(optional) Please enter a new config path (default: '~/.kubeit/config.json'): ", false)
 
 	hdir, _ := os.UserHomeDir()
@@ -90,17 +90,17 @@ func (c *ConfigHandler) ConfigureConDialogue() (err error) {
 	if err != nil {
 		return err
 	}
-	url := Ask("KubeIT URL", "(required) Please enter a valid kubeIT URL (example: https://kubeit.example.com): ", true)
-	token := Ask("KubeIT Access Token", "(required) Please enter a valid kubeIT access token: ", true)
+	url := Ask("KubeIT URL", "[CONFIG CONNECTION] (required) Please enter a valid kubeIT URL (example: https://kubeit.example.com): ", true)
+	token := Ask("KubeIT Access Token", "[CONFIG CONNECTION] (required) Please enter a valid kubeIT access token: ", true)
 
 	testrClient := httpd.RequestClient{}
 	testrClient.Init(url, token)
 	_, failed, err := requests.GetSchemes(&testrClient)
 	if err != nil {
-		fmt.Println("Error in validating login from server: " + err.Error())
+		fmt.Println("[CONFIG CONNECTION] Error in validating login from server: " + err.Error())
 		os.Exit(2)
 	} else if failed {
-		fmt.Println("Error in validating login: Wrong AUTH token")
+		fmt.Println("[CONFIG CONNECTION] Error in validating login: Wrong AUTH token")
 		os.Exit(2)
 	}
 
@@ -113,7 +113,7 @@ func (c *ConfigHandler) ConfigureConDialogue() (err error) {
 	}
 	err = c.SaveConfig()
 
-	fmt.Println("Success: New config created and validated")
+	fmt.Println("[CONFIG CONNECTION] Success: New config created and validated")
 
 	return err
 }

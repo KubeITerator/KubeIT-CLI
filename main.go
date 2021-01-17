@@ -30,7 +30,7 @@ func main() {
 
 	// get
 	cmdGetWorkflow := cmdGet.NewCommand("workflow", "Gets the current status of a workflow")
-	cmdGetScheme := cmdGet.NewCommand("scheme", "Gets the currently available schemes from the server, or detailed information about a specific scheme")
+	cmdGetScheme := cmdGet.NewCommand("scheme", "Gets the currently available schemes from the server (or local), or detailed information about a specific scheme")
 	cmdGetResults := cmdGet.NewCommand("result", "Gets the URL(s) to results of a specified workflow")
 
 	// delete
@@ -57,16 +57,16 @@ func main() {
 	cmdGetWfName := cmdGetWorkflow.String("n", "name", &argparse.Options{Required: false, Help: "Name of a workflow, gets the current status of the workflow"})
 	cmdGetWfProject := cmdGetWorkflow.String("p", "project", &argparse.Options{Required: false, Help: "Name of a project, gets the current status of all workflows in a project"})
 	// get Scheme(s)
-	cmdGetScheme.String("n", "name", &argparse.Options{Required: true, Help: "Name of a scheme, gets the current description of the specified scheme"})
-	cmdGetScheme.Flag("l", "local", &argparse.Options{Default: true, Help: "Get local schemes if true, else get remote schemes"})
+	cmdGetSchemeName := cmdGetScheme.String("n", "name", &argparse.Options{Required: false, Help: "Name of a scheme, gets the current description of the specified scheme"})
+	cmdGetSchemeLocal := cmdGetScheme.Flag("l", "local", &argparse.Options{Default: false, Help: "Get local schemes if true, else get remote schemes"})
 	// get Results
-	cmdGetResults.String("n", "name", &argparse.Options{Required: true, Help: "Name of a running workflow, gets the results of a finished workflow"})
+	cmdGetResultsName := cmdGetResults.String("n", "name", &argparse.Options{Required: true, Help: "Name of a running workflow, gets the results of a finished workflow"})
 
 	// delete Workflow
-	cmdDeleteWorkflow.String("n", "name", &argparse.Options{Required: false, Help: "Name of a workflow, deletes the workflow"})
-	cmdDeleteWorkflow.String("p", "project", &argparse.Options{Required: false, Help: "Name of a project, deletes all workflows in a project"})
+	cmdDeleteWFName := cmdDeleteWorkflow.String("n", "name", &argparse.Options{Required: false, Help: "Name of a workflow, deletes the workflow"})
+	cmdDeleteWFProject := cmdDeleteWorkflow.String("p", "project", &argparse.Options{Required: false, Help: "Name of a project, deletes all workflows in a project"})
 	// delete Scheme
-	cmdDeleteScheme.String("n", "name", &argparse.Options{Required: true, Help: "Name of a local scheme workflow, deletes the specified local scheme"})
+	cmdDeleteSchemeName := cmdDeleteScheme.String("n", "name", &argparse.Options{Required: true, Help: "Name of a local scheme workflow, deletes the specified local scheme"})
 
 	// configure
 	cmdConfigureScheme := cmdConfigure.Flag("s", "scheme", &argparse.Options{Required: false, Help: "Configure schemes to substitute serverside schemes with local defaults"})
@@ -153,13 +153,18 @@ func main() {
 		if cmdGetWorkflow.Happened() {
 			functions.GetWorkflowStatus(*cmdGetWfName, *cmdGetWfProject, &rClient)
 		} else if cmdGetScheme.Happened() {
-
+			functions.GetScheme(*cmdGetSchemeName, *cmdGetSchemeLocal, &cHandler, &rClient)
 		} else if cmdGetResults.Happened() {
-
+			functions.GetResults(*cmdGetResultsName, &rClient)
 		}
-		// GetHandling
 	} else if cmdDelete.Happened() {
 		// DeleteHandling
+		if cmdDeleteWorkflow.Happened() {
+			functions.DeleteWorkflows(*cmdDeleteWFName, *cmdDeleteWFProject, &rClient)
+		} else if cmdDeleteScheme.Happened() {
+			functions.DeleteScheme(&cHandler, *cmdDeleteSchemeName)
+		}
+
 	}
 
 }
