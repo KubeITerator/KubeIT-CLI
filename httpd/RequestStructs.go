@@ -34,3 +34,9 @@ type WFStatus struct {
 	Running       int    `json:"steps"`
 	Finished      int    `json:"finished"`
 }
+
+type SchemeInfo struct {
+	Name       string            `json:"name"`
+	Yaml       string            `json:"yaml"`
+	Parameters map[string]string `json:"parameters"`
+}

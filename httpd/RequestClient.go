@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 )
 
 type RequestClient struct {
@@ -16,9 +15,10 @@ type RequestClient struct {
 	token      string
 }
 
-func (c *RequestClient) Init(token string) {
+func (c *RequestClient) Init(url, token string) {
 	c.httpClient = &http.Client{}
 	c.token = token
+	c.BaseURL = url
 }
 
 func (c *RequestClient) SendRequest(method, path string, requestBody, returnBody interface{}) (err error, statuscode int) {
@@ -30,9 +30,8 @@ func (c *RequestClient) SendRequest(method, path string, requestBody, returnBody
 	// reponse, error
 	resp, err := c.do(req, returnBody)
 
-	if err != nil && resp == nil {
-		fmt.Println("Error in Sending request, abort, please check your connection")
-		os.Exit(2)
+	if err != nil {
+		return err, 0
 	}
 
 	return err, resp.StatusCode
