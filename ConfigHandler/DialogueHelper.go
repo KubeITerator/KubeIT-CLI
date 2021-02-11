@@ -1,6 +1,7 @@
 package ConfigHandler
 
 import (
+	"bufio"
 	"fmt"
 	"kubeitcli/httpd"
 	"kubeitcli/httpd/requests"
@@ -11,7 +12,9 @@ import (
 func Ask(pname, question string, required bool) (answer string) {
 
 	fmt.Println(question)
-	fmt.Scanln(&answer)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	answer = scanner.Text()
 	if answer == "" {
 		if required {
 			fmt.Println("ConfigEntry: " + pname + " must be specified. Try again.")
@@ -105,7 +108,12 @@ validation:
 		if defaultName == "" {
 			saveparams[name] = Ask(name, fmt.Sprintf("[CONFIG SCHEME] (required) Value for ParameterName: %v", name), false)
 		} else {
-			saveparams[name] = Ask(name, fmt.Sprintf("[CONFIG SCHEME] (optional) Value for ParameterName: %v, Remote Default: %v", name, defaultName), false)
+			answer := Ask(name, fmt.Sprintf("[CONFIG SCHEME] (optional) Value for ParameterName: %v, Remote Default: %v", name, defaultName), false)
+			if answer != "" {
+				saveparams[name] = answer
+			} else {
+				saveparams[name] = defaultName
+			}
 		}
 	}
 
@@ -118,6 +126,6 @@ validation:
 	err = configHandler.SaveConfig()
 
 	if err == nil {
-		fmt.Println(fmt.Sprintf("[CONFIG SCHEME] Local scheme: %v successfully configured", schemeName))
+		fmt.Println(fmt.Sprintf("[CONFIG SCHEME] Local scheme: %v successfully configured", altName))
 	}
 }

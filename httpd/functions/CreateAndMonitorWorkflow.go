@@ -19,10 +19,11 @@ func ValidateParams(scheme ConfigHandler.Scheme, params []string) (missing []str
 	}
 
 	for key, value := range scheme.Parameters {
+		if strings.Contains(key, "inputdata") {
+			infilecount++
+		}
 		if value == "" {
-			if strings.Contains(key, "inputdata") {
-				infilecount++
-			} else {
+			if !strings.Contains(key, "inputdata") {
 				missing = append(missing, key)
 			}
 		}
@@ -54,9 +55,9 @@ func CreateAndMonitorWorkflow(rClient *httpd.RequestClient, scheme ConfigHandler
 				os.Exit(2)
 			}
 			if index == 0 {
-				scheme.Parameters["inputdata"] = url
+				scheme.Parameters["input.inputdata"] = url
 			} else {
-				scheme.Parameters["inputdata"+strconv.Itoa(index)] = url
+				scheme.Parameters["input.inputdata"+strconv.Itoa(index)] = url
 			}
 		}
 	}
@@ -86,7 +87,7 @@ func CreateAndMonitorWorkflow(rClient *httpd.RequestClient, scheme ConfigHandler
 
 		backoff := 0
 		for {
-			time.Sleep(30 * time.Second)
+			time.Sleep(5 * time.Second)
 			status, _, err := requests.GetStatus("", data.WfName, rClient)
 			if err != nil {
 				backoff++
@@ -95,10 +96,14 @@ func CreateAndMonitorWorkflow(rClient *httpd.RequestClient, scheme ConfigHandler
 				fmt.Println("[CREATE WORKFLOW] Failed to get status, after BackOffLimit (10/10)")
 				os.Exit(2)
 			}
-			fmt.Println(fmt.Sprintf("[CREATE WORKFLOW] Name: %v, Status: %v, %v/%v Pods finished", data.WfName, status[0].Status, status[0].Status, status[0].Finished))
+			fmt.Println(fmt.Sprintf("[CREATE WORKFLOW] Name: %v, Status: %v, %v/%v Pods finished", data.WfName, status[0].Status, status[0].Finished, status[0].Running))
 			if status[0].Status == "Succeeded" {
 				break
+			} else if status[0].Status == "Failed" {
+				fmt.Println("[CREATE WORKFLOW] Workflow failed with error status: " + status[0].Statusmessage)
+				os.Exit(2)
 			}
+			time.Sleep(5 * time.Second)
 		}
 
 		resp, err := requests.GetResults(data.WfName, rClient)

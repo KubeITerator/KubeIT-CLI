@@ -13,7 +13,7 @@ func GetStatus(project, workflow string, c *httpd.RequestClient) (wfstatus []htt
 		path = fmt.Sprintf("/v1/status?workflow=%v", workflow)
 	}
 
-	err, statuscode := c.SendRequest("GET", path, nil, wfstatus)
+	err, statuscode := c.SendRequest("GET", path, nil, &wfstatus)
 
 	if statuscode != 200 {
 		failed = true

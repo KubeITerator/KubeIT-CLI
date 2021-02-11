@@ -88,7 +88,6 @@ func main() {
 			}
 		}
 	}
-	fmt.Println(*configFile)
 	if *configFile != "" {
 		cHandler.File, err = os.Open(*configFile)
 	} else {
@@ -151,7 +150,7 @@ func main() {
 
 	} else if cmdGet.Happened() {
 		if cmdGetWorkflow.Happened() {
-			functions.GetWorkflowStatus(*cmdGetWfName, *cmdGetWfProject, &rClient)
+			functions.GetWorkflowStatus(*cmdGetWfProject, *cmdGetWfName, &rClient)
 		} else if cmdGetScheme.Happened() {
 			functions.GetScheme(*cmdGetSchemeName, *cmdGetSchemeLocal, &cHandler, &rClient)
 		} else if cmdGetResults.Happened() {

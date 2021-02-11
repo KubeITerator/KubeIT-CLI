@@ -11,7 +11,7 @@ func GetResults(name string, rClient *httpd.RequestClient) {
 
 	status, _, _ := requests.GetStatus("", name, rClient)
 
-	if status[0].Statusmessage != "Succeeded" {
+	if status[0].Status != "Succeeded" {
 		fmt.Println("[GET RESULTS] Error: Workflow not finished, status: " + status[0].Statusmessage)
 		os.Exit(2)
 	}
