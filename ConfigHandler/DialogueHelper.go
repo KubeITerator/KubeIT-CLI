@@ -47,7 +47,7 @@ func AskYN(question string) (yesorno bool) {
 	return yesorno
 }
 
-func ConfigureSchemeDialogue(rClient *httpd.RequestClient, configHandler *ConfigHandler) {
+func ConfigureSchemeDialogue(rClient *httpd.RequestClient, configHandler *ConfigHandler, expertMode bool) {
 	fmt.Println("[CONFIG SCHEME] This dialogue is used to preconfigure remote schemes with local defaults and versions.")
 
 	schemes, failed, err := requests.GetSchemes(rClient)
@@ -108,9 +108,13 @@ validation:
 		if defaultName == "" {
 			saveparams[name] = Ask(name, fmt.Sprintf("[CONFIG SCHEME] (required) Value for ParameterName: %v", name), false)
 		} else {
-			answer := Ask(name, fmt.Sprintf("[CONFIG SCHEME] (optional) Value for ParameterName: %v, Remote Default: %v", name, defaultName), false)
-			if answer != "" {
-				saveparams[name] = answer
+			if expertMode {
+				answer := Ask(name, fmt.Sprintf("[CONFIG SCHEME] (optional) Value for ParameterName: %v, Remote Default: %v", name, defaultName), false)
+				if answer != "" {
+					saveparams[name] = answer
+				} else {
+					saveparams[name] = defaultName
+				}
 			} else {
 				saveparams[name] = defaultName
 			}

@@ -4,109 +4,127 @@ Dedicated client for use with the [KubeIT backend](https://github.com/KubeITerat
 This client allows users to preconfigure and use server sided schemes as templates for workflow creation.
 
 ## Contents
+- [Description](#description)
 - [Installation](#installation)
 - [Usage](#features)
-- [Availability](#availability)
-- [Input & Output](#input-output)
 - [FAQ](#faq)
 - [License](#license)
-- [Bugs](#bugs)
+## Description
 
+The KubeIT CLI is a dedicated interface method for the KubeIT Backend. 
+It contains helper functions for communications with the backend
+and allows automated access to in- and output data via S3.
 
 ## Installation
 
-Download client-release artifact and unzip it.
-Set the needed environment variables with:
-```
-    export K8SEDGAR_URL="YOUR-BIOKUBE-URL"
-```
+Download the lastest release for your desired operating system. All following examples reference the Linux binary kubeit, 
+for other operating systems exchange `./kubeit` with the specific program (e.g. `./kubeit.exe` for windows)
+
 #### Initial configuration:
 
-- K8SEDGAR_URL: Biokube-URL (with https prefix)
-- K8SEDGAR_TOKEN: X-Auth-Token for k8s server.
-- optional: K8SEDGAR_BBUCKET: S3 Basepath for File-Upload (default: edgartest)
+Configure your backend connection with:
 
+```
+    ./kubeit configure
+```
+
+This will show a configuration dialogue that asks for your KubeIT URL and access token. 
+The information is by default saved in `~/.kubeit/config.json`. Other paths can be specified via the `-c` flag.
 
 ## Usage
 
-Scheduling a single job to kubernetes:
+If more information is needed use the `-h` flag to access the help page with an overview for the chosen command.
+
+#### Configure local scheme
+
+To use KubeIT first a local scheme must be configured. 
+Local schemes are variations of globally available backend schemes and can pre-configure backend-schemes with non-default parameters.
+Local schemes can be configured, via a dialogue, with:
 
 ```
-    ./k8sedgar create -i {INPUTFILE} -o {OUTPUTFILE}
+    ./kubeit configure -s
 ```
 
-INPUTFILE expected format: fasta (protein)
-OUTPUTFILE format: Plain text
+In normal operation only required arguments will be shown. If you want to change defaulted backend parameters locally, 
+use the `-e` flag to enable expert configuration mode. (e.g. `./kubeit configure -s -e`)
 
-optional parameters are:
 
-- -s: Chunksize in Bytes for distributing Blast-Jobs (default: 1000000)
-- -d: Daemonize the job and wait for results in an independent process.
+#### Schedule local scheme to the cluster
 
-If using the daemon process it can be terminated with:
+The KubeIT CLI allows local schemes to be configured and executed in one step. A very basic example for this is:
 
 ```
-    ./k8sedgar daemon stop
+    ./kubeit create workflow -s YOUR-LOCAL-SCHEME-NAME -i YOUR-INPUTFILE -o YOUR-OUTPUTFILE -w 
 ```
 
-And the status of not finished jobs can be determined with:
+`-s`: specified your local scheme  
+`-i`: Your input-file on the local file system (The default-template accepts protein FASTA files (.faa))  
+`-o`: Automatically download results to the specified destination  
+`-w`: Watch the workflow execution and wait for either workflow completion or failure  
+
+
+### Input upload in advance
+
+Input files can either be automatically upload via `-i` or uploaded beforehand. This can be done with:
 
 ```
-    ./k8sedgar status
+    ./kubeit create S3 -f YOUR-FILE
 ```
 
+If uploaded beforehand KubeIT will print an associated time-limited download URL automatically. This URL can be used for future workflows.
 
+### Specify a parameter on scheduling
 
+Sometime the needed parameters can differ. For this KubeIT can receive parameters in workflow creation. Parameters are specified with the `-p` flag followed by the parameter name and its desired value.
+Example: `-p "input.inputdata=https://example.com/test"`
 
+### Delete a workflow
 
-## Usage for multi-jobs with config-file
-
-### Scheduling
-Scheduling a job requires a json config file. To configure your job just create a json-config
-file with the following scheme. The "JobParameter" and "SplitSize" (default: 10 MB) parameter are optional and can be
-omitted.
-
-```
-{
-
-  "JobParameter": [ PARAMETERNAME=PARAMETERVALUE ],
-  "OutputFolder": "FOLDER FOR RESULTS",
-  "SplitSize":     INTEGER SIZE (MB) FOR SPLITTING,
-  "InputFiles": [
-                  "PATH TO INPUTFILE",
-                  "PATH TO ANOTHER INPUTFILE"
-                ]
-}
-```
-
-### Run the Job
-
-To run the job just use:
-```
-    ./k8sedgar create -f job.json
-```
-
-to run the job and detach a daemon process for monitoring run:
+Workflows can be deleted with:
 
 ```
-    ./k8sedgar create -f job.json -d
+    ./kubeit delete workflow -n WORKFLOW-NAME
 ```
 
-### Get status
+### Delete a collection of workflows
 
-To get the status of currently monitored jobs just run:
-```
-    ./k8sedgar status
-```
-
-### Terminate background daemon
-
-If something went wrong, and the background process behaves not properly.
-The background daemon process can be terminated with:
+Multiple workflows can be deleted by specifying a project group.
 
 ```
-    ./k8sedgar daemon stop
+    ./kubeit delete workflow -g PROJECT-GROUP-NAME
 ```
 
+### Get a workflow status
 
-    
+If a workflow is not scheduled with the `-w` flag, its status can be accessed once with:
+
+```
+    ./kubeit get workflow -n WORKFLOW-NAME
+```
+
+or for a complete project group:
+
+```
+    ./kubeit get workflow -g PROJECT-GROUP-NAME
+```
+
+### Get more information about (a) local or remote scheme(s)
+
+Get all available schemes:
+
+```
+    ./kubeit get scheme
+```
+
+get more information about a specific scheme:
+
+```
+    ./kubeit get scheme -n SCHEME-NAME
+```
+
+both commands can either be used for remote schemes, or for local schemes (with the `-l` flag)
+
+
+## FAQ
+
+

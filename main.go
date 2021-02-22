@@ -55,7 +55,7 @@ func main() {
 
 	// get Workflow(s)
 	cmdGetWfName := cmdGetWorkflow.String("n", "name", &argparse.Options{Required: false, Help: "Name of a workflow, gets the current status of the workflow"})
-	cmdGetWfProject := cmdGetWorkflow.String("p", "project", &argparse.Options{Required: false, Help: "Name of a project, gets the current status of all workflows in a project"})
+	cmdGetWfProject := cmdGetWorkflow.String("g", "group", &argparse.Options{Required: false, Help: "Name of a project group, gets the current status of all workflows in a project"})
 	// get Scheme(s)
 	cmdGetSchemeName := cmdGetScheme.String("n", "name", &argparse.Options{Required: false, Help: "Name of a scheme, gets the current description of the specified scheme"})
 	cmdGetSchemeLocal := cmdGetScheme.Flag("l", "local", &argparse.Options{Default: false, Help: "Get local schemes if true, else get remote schemes"})
@@ -64,12 +64,13 @@ func main() {
 
 	// delete Workflow
 	cmdDeleteWFName := cmdDeleteWorkflow.String("n", "name", &argparse.Options{Required: false, Help: "Name of a workflow, deletes the workflow"})
-	cmdDeleteWFProject := cmdDeleteWorkflow.String("p", "project", &argparse.Options{Required: false, Help: "Name of a project, deletes all workflows in a project"})
+	cmdDeleteWFProject := cmdDeleteWorkflow.String("g", "group", &argparse.Options{Required: false, Help: "Name of a project group, deletes all workflows in a project"})
 	// delete Scheme
 	cmdDeleteSchemeName := cmdDeleteScheme.String("n", "name", &argparse.Options{Required: true, Help: "Name of a local scheme workflow, deletes the specified local scheme"})
 
 	// configure
 	cmdConfigureScheme := cmdConfigure.Flag("s", "scheme", &argparse.Options{Required: false, Help: "Configure schemes to substitute serverside schemes with local defaults"})
+	cmdConfigureSchemeExpert := cmdConfigure.Flag("e", "expert", &argparse.Options{Required: false, Help: "Shows all parameters on local scheme configuration, without this only non defaulted parameters will be shown"})
 
 	// Parse OS args
 	err := parser.Parse(os.Args)
@@ -109,7 +110,7 @@ func main() {
 	rClient.Init(cHandler.Config.URL, cHandler.Config.Token)
 
 	if *cmdConfigureScheme {
-		ConfigHandler.ConfigureSchemeDialogue(&rClient, &cHandler)
+		ConfigHandler.ConfigureSchemeDialogue(&rClient, &cHandler, *cmdConfigureSchemeExpert)
 	}
 
 	if cmdVersion.Happened() {

@@ -20,7 +20,9 @@ func ValidateParams(scheme ConfigHandler.Scheme, params []string) (missing []str
 
 	for key, value := range scheme.Parameters {
 		if strings.Contains(key, "inputdata") {
-			infilecount++
+			if value == "" {
+				infilecount++
+			}
 		}
 		if value == "" {
 			if !strings.Contains(key, "inputdata") {
