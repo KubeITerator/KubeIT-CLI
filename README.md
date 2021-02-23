@@ -8,7 +8,6 @@ This client allows users to preconfigure and use server sided schemes as templat
 - [Installation](#installation)
 - [Usage](#features)
 - [FAQ](#faq)
-- [License](#license)
 ## Description
 
 The KubeIT CLI is a dedicated interface method for the KubeIT Backend. 
@@ -124,7 +123,24 @@ get more information about a specific scheme:
 
 both commands can either be used for remote schemes, or for local schemes (with the `-l` flag)
 
+### Create new remote schemes
+
+New remote schemes can be created with:
+
+```
+    ./kubeit create scheme -n SCHEME-NAME -f SCHEME-YAML-FILE
+```
+
+see [here](/docs/GUIDELINES.md) for a short guideline on how to create new schemes.
+
 
 ## FAQ
 
+### How does KubeIT upload data to S3 ?
 
+KubeIT uses pre-authenticated S3 links to upload data to S3. It automatically determines if a file have to be split up
+or can be uploaded as a whole.
+
+### How does the splitting work ?
+
+Splitting is done using the Splitter WorkflowTemplate and the splitter interface. For mor information see [here]()
